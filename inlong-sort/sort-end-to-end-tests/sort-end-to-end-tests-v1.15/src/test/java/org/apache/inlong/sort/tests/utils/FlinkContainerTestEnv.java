@@ -170,25 +170,6 @@ public abstract class FlinkContainerTestEnv extends TestLogger {
         }
     }
 
-    public void submitGroupFileJob(String groupFile, Path... jars)
-            throws IOException, InterruptedException {
-        final List<String> commands = new ArrayList<>();
-        String containerGroupFile = copyToContainerTmpPath(jobManager, groupFile);
-        commands.add(FLINK_BIN + "/flink run -d");
-        commands.add("-c org.apache.inlong.sort.Entrance");
-        commands.add(copyToContainerTmpPath(jobManager, constructDistJar(jars)));
-        commands.add("--group.info.file");
-        commands.add(containerGroupFile);
-
-        ExecResult execResult =
-                jobManager.execInContainer("bash", "-c", String.join(" ", commands));
-        LOG.info(execResult.getStdout());
-        LOG.error(execResult.getStderr());
-        if (execResult.getExitCode() != 0) {
-            throw new AssertionError("Failed when submitting the SQL job.");
-        }
-    }
-
     /**
      * Get {@link RestClusterClient} connected to this FlinkContainer.
      *
