@@ -51,9 +51,9 @@ import java.util.stream.Stream;
  * End-to-end tests for sort-connector-postgres-cdc-v1.15 uber jar.
  * Test flink sql Postgres cdc to StarRocks
  */
-public class PostgresToStarRocksTest extends FlinkContainerTestEnv {
+public class PostgresToStarRocksITCase extends FlinkContainerTestEnv {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PostgresToStarRocksTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PostgresToStarRocksITCase.class);
 
     private static final Path postgresJar = TestUtils.getResource("sort-connector-postgres-cdc.jar");
     private static final Path jdbcJar = TestUtils.getResource("sort-connector-starrocks.jar");
@@ -73,7 +73,8 @@ public class PostgresToStarRocksTest extends FlinkContainerTestEnv {
 
     static {
         try {
-            sqlFile = Paths.get(PostgresToStarRocksTest.class.getResource("/flinkSql/postgres_test.sql").toURI()).toString();
+            sqlFile = Paths.get(PostgresToStarRocksITCase.class.getResource("/flinkSql/postgres_test.sql").toURI())
+                    .toString();
             buildStarRocksImage();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -102,22 +103,23 @@ public class PostgresToStarRocksTest extends FlinkContainerTestEnv {
     }
 
     @ClassRule
-    public static StarRocksContainer STAR_ROCKS = (StarRocksContainer) new StarRocksContainer(getNewStarRocksImageName())
-            .withExposedPorts(9030, 8030, 8040)
-            .withNetwork(NETWORK)
-            .withAccessToHost(true)
-            .withNetworkAliases(INTER_CONTAINER_STAR_ROCKS_ALIAS)
-            .withLogConsumer(new Slf4jLogConsumer(STAR_ROCKS_LOG));
+    public static StarRocksContainer STAR_ROCKS =
+            (StarRocksContainer) new StarRocksContainer(getNewStarRocksImageName())
+                    .withExposedPorts(9030, 8030, 8040)
+                    .withNetwork(NETWORK)
+                    .withAccessToHost(true)
+                    .withNetworkAliases(INTER_CONTAINER_STAR_ROCKS_ALIAS)
+                    .withLogConsumer(new Slf4jLogConsumer(STAR_ROCKS_LOG));
 
     @ClassRule
     public static final PostgreSQLContainer POSTGRES_CONTAINER = (PostgreSQLContainer) new PostgreSQLContainer(
             DockerImageName.parse("debezium/postgres:13").asCompatibleSubstituteFor("postgres"))
-            .withUsername("flinkuser")
-            .withPassword("flinkpw")
-            .withDatabaseName("test")
-            .withNetwork(NETWORK)
-            .withNetworkAliases("postgres")
-            .withLogConsumer(new Slf4jLogConsumer(LOG));
+                    .withUsername("flinkuser")
+                    .withPassword("flinkpw")
+                    .withDatabaseName("test")
+                    .withNetwork(NETWORK)
+                    .withNetworkAliases("postgres")
+                    .withLogConsumer(new Slf4jLogConsumer(LOG));
 
     @Before
     public void setup() {

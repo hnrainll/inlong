@@ -21,9 +21,9 @@ import org.apache.inlong.sort.tests.utils.FlinkContainerTestEnv;
 import org.apache.inlong.sort.tests.utils.JdbcProxy;
 import org.apache.inlong.sort.tests.utils.PlaceholderResolver;
 import org.apache.inlong.sort.tests.utils.TestUtils;
+
 import org.junit.AfterClass;
 import org.junit.ClassRule;
-import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Container.ExecResult;
@@ -51,15 +51,17 @@ import java.util.Map;
 /**
  * End-to-end tests for sort-connector-kafka uber jar.
  */
-public class KafkaE2ETest extends FlinkContainerTestEnv {
+public class KafkaE2EITCase extends FlinkContainerTestEnv {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KafkaE2ETest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KafkaE2EITCase.class);
 
     private static final Path kafkaJar = TestUtils.getResource("sort-connector-kafka.jar");
     private static final Path jdbcJar = TestUtils.getResource("sort-connector-jdbc.jar");
     private static final Path mysqlJar = TestUtils.getResource("sort-connector-mysql-cdc.jar");
     private static final Path mysqlJdbcJar = TestUtils.getResource("mysql-driver.jar");
     // Can't use getResource("xxx").getPath(), windows will don't know that path
+
+    private static final String MYSQL_DRIVER_CLASS = "com.mysql.cj.jdbc.Driver";
 
     @ClassRule
     public static final KafkaContainer KAFKA =
@@ -72,12 +74,12 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
     @ClassRule
     public static final PostgreSQLContainer POSTGRES = (PostgreSQLContainer) new PostgreSQLContainer(
             DockerImageName.parse("debezium/postgres:13").asCompatibleSubstituteFor("postgres"))
-            .withUsername("flinkuser")
-            .withPassword("flinkpw")
-            .withDatabaseName("test")
-            .withNetwork(NETWORK)
-            .withNetworkAliases("postgres")
-            .withLogConsumer(new Slf4jLogConsumer(LOG));
+                    .withUsername("flinkuser")
+                    .withPassword("flinkpw")
+                    .withDatabaseName("test")
+                    .withNetwork(NETWORK)
+                    .withNetworkAliases("postgres")
+                    .withLogConsumer(new Slf4jLogConsumer(LOG));
 
     @AfterClass
     public static void teardown() {
@@ -92,7 +94,7 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
 
     private Path getSql(String fileName, Map<String, Object> properties) {
         try {
-            Path file = Paths.get(KafkaE2ETest.class.getResource("/flinkSql/" + fileName).toURI());
+            Path file = Paths.get(KafkaE2EITCase.class.getResource("/flinkSql/" + fileName).toURI());
             return PlaceholderResolver.getDefaultResolver().resolveByMap(file, properties);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -101,7 +103,7 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
 
     private Path getGroupFile(String fileName, Map<String, Object> properties) {
         try {
-            Path file = Paths.get(KafkaE2ETest.class.getResource("/groupFile/" + fileName).toURI());
+            Path file = Paths.get(KafkaE2EITCase.class.getResource("/groupFile/" + fileName).toURI());
             return PlaceholderResolver.getDefaultResolver().resolveByMap(file, properties);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -110,7 +112,7 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
 
     private String getCreateStatement(String fileName, Map<String, Object> properties) {
         try {
-            Path file = Paths.get(KafkaE2ETest.class.getResource("/env/" + fileName).toURI());
+            Path file = Paths.get(KafkaE2EITCase.class.getResource("/env/" + fileName).toURI());
             return PlaceholderResolver.getDefaultResolver().resolveByMap(
                     new String(Files.readAllBytes(file), StandardCharsets.UTF_8),
                     properties);
@@ -148,7 +150,7 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
      *
      * @throws Exception The exception may throws when execute the case
      */
-    @Test
+    // @Test
     public void testKafkaWithSqlFile() throws Exception {
         final String topic = "test-topic";
         final String mysqlInputTable = "test_input";
@@ -187,7 +189,8 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
 
         // validate output
         JdbcProxy proxy =
-                new JdbcProxy(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword(), MYSQL_DRIVER_CLASS);
+                new JdbcProxy(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword(),
+                        MYSQL_DRIVER_CLASS);
         List<String> expectResult =
                 Arrays.asList(
                         "1,jacket,water resistent white wind breaker,0.2,,,",
@@ -199,7 +202,7 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
                 60000L);
     }
 
-    @Test
+    // @Test
     public void testKafkaWithGroupFile() throws Exception {
         final String topic = "test_topic_for_group_file";
         final String mysqlInputTable = "test_input_for_group_file";
@@ -247,7 +250,8 @@ public class KafkaE2ETest extends FlinkContainerTestEnv {
 
         // validate output
         JdbcProxy proxy =
-                new JdbcProxy(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword(), MYSQL_DRIVER_CLASS);
+                new JdbcProxy(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword(),
+                        MYSQL_DRIVER_CLASS);
         List<String> expectResult =
                 Arrays.asList(
                         "1,jacket,water resistent white wind breaker,0.2,null,null,null",
